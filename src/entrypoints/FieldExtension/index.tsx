@@ -2,7 +2,7 @@ import type { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
 import { Canvas } from 'datocms-react-ui';
 import deepEqual from 'fast-deep-equal';
 import get from 'lodash-es/get';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDeepCompareEffect } from 'use-deep-compare';
 import { Empty } from '../../components/Empty';
 import TableEditor from '../../components/TableEditor';
@@ -32,6 +32,9 @@ export default function FieldExtension({ ctx }: Props) {
   const rawValue = get(ctx.formValues, ctx.fieldPath) as string | null;
   const [value, setValue] = useState<InnerValue>(toInnerValue(rawValue));
   const pendingChange = useRef(false);
+  const syncTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(syncTimer.current), []);
 
   useDeepCompareEffect(() => {
     const newValue = toInnerValue(rawValue);
@@ -47,13 +50,23 @@ export default function FieldExtension({ ctx }: Props) {
     return <Canvas ctx={ctx}>Invalid value!</Canvas>;
   }
 
-  const handleUpdate = (newValue: Value | null) => {
+  const handleUpdate = (newValue: Value | null, immediate = false) => {
     pendingChange.current = true;
     setValue(newValue);
-    ctx.setFieldValue(
-      ctx.fieldPath,
-      newValue === null ? null : JSON.stringify(newValue, null, 2),
-    );
+
+    const sync = () =>
+      ctx.setFieldValue(
+        ctx.fieldPath,
+        newValue === null ? null : JSON.stringify(newValue, null, 2),
+      );
+
+    if (immediate) {
+      clearTimeout(syncTimer.current);
+      sync();
+    } else {
+      clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(sync, 300);
+    }
   };
 
   const handleOpenInFullScreen = async () => {
@@ -66,7 +79,7 @@ export default function FieldExtension({ ctx }: Props) {
     })) as Value | null | 'abort';
 
     if (exitValue === 'abort') return;
-    handleUpdate(exitValue);
+    handleUpdate(exitValue, true);
   };
 
   return (
