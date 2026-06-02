@@ -127,7 +127,20 @@ export default function RichTextCell({
       {editor && (
         <BubbleMenu
           editor={editor}
-          tippyOptions={{ duration: 100, placement: 'top-start' }}
+          shouldShow={({ state }) => !state.selection.empty}
+          tippyOptions={{
+            duration: 100,
+            placement: 'top-start',
+            popperOptions: {
+              strategy: 'fixed',
+              modifiers: [
+                {
+                  name: 'flip',
+                  options: { fallbackPlacements: ['bottom-start'] },
+                },
+              ],
+            },
+          }}
         >
           <div className={s.bubbleMenu}>
             <button
