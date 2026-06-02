@@ -1,0 +1,100 @@
+.cell {
+  width: 100%;
+  min-height: 44px;
+}
+
+.editor {
+  width: 100%;
+}
+
+.editor :global(.ProseMirror) {
+  padding: 8px 12px;
+  outline: none;
+  min-height: 44px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+.editor :global(.ProseMirror) p {
+  margin: 0;
+}
+
+.editor :global(.ProseMirror) p + p {
+  margin-top: 4px;
+}
+
+.editor :global(.ProseMirror) h1,
+.editor :global(.ProseMirror) h2,
+.editor :global(.ProseMirror) h3 {
+  margin: 4px 0 2px;
+  line-height: 1.3;
+}
+
+.editor :global(.ProseMirror) h1 {
+  font-size: 1.15em;
+}
+
+.editor :global(.ProseMirror) h2 {
+  font-size: 1.05em;
+}
+
+.editor :global(.ProseMirror) ul,
+.editor :global(.ProseMirror) ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.editor :global(.ProseMirror) a {
+  color: var(--accent-color, #396cff);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editor :global(.ProseMirror-focused) {
+  background: rgba(var(--light-body-color-rgb-components), 0.02);
+}
+
+/* Bubble menu */
+.bubbleMenu {
+  display: flex;
+  align-items: center;
+  background: #1c2637;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  padding: 2px;
+  gap: 1px;
+}
+
+.bubbleMenu button {
+  background: transparent;
+  border: none;
+  color: #e8ecf0;
+  padding: 5px 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: background 0.1s;
+  line-height: 1;
+  min-width: 28px;
+  text-align: center;
+}
+
+.bubbleMenu button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bubbleMenu button.isActive {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.separator {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
