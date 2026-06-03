@@ -29,8 +29,8 @@ import {
 import { useDeepCompareMemo } from 'use-deep-compare';
 import type { Actions, Row, Value } from '../../types';
 import { emptyCell, stringToCellValue } from '../../utils/dastConverter';
+import Cell from '../Cell';
 import EditableHeader from '../EditableHeader';
-import RichTextCell from '../RichTextCell';
 import s from './styles.module.css';
 
 // react-table 7 augments ColumnInstance with resize props via UseResizeColumns plugin
@@ -91,7 +91,7 @@ export default function TableEditor({
     () =>
       value.columns.map((column) => ({
         Header: EditableHeader,
-        Cell: RichTextCell,
+        Cell,
         id: column,
         accessor: (row: Row) => row[column],
       })) as unknown as Column<Row>[],

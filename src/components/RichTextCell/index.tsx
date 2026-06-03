@@ -5,12 +5,12 @@ import StarterKit from '@tiptap/starter-kit';
 import { dequal } from 'dequal';
 import { useEffect, useRef } from 'react';
 import type { Column as TableColumn, Row as TableRow } from 'react-table';
-import type { Actions, CellValue, Row } from '../../types';
+import type { Actions, DastCellValue, Row } from '../../types';
 import { dastToTiptap, tiptapToDast } from '../../utils/dastConverter';
 import s from './styles.module.css';
 
 type Props = Actions & {
-  value: CellValue;
+  value: DastCellValue;
   row: TableRow<Row>;
   rows: TableRow<Row>[];
   columns: TableColumn<Row>[];

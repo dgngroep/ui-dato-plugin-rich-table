@@ -53,14 +53,26 @@ export type DastDocument = {
   children: DastBlockNode[];
 };
 
-export type CellValue = {
+export type DastCellValue = {
   schema: 'dast';
   document: DastDocument;
 };
 
+export type ImageCellValue = {
+  schema: 'image';
+  upload: {
+    id: string;
+    url: string;
+    width: number | null;
+    height: number | null;
+  };
+};
+
+export type CellValue = DastCellValue | ImageCellValue;
+
 // ---- Helpers ----
 
-export function emptyCell(): CellValue {
+export function emptyCell(): DastCellValue {
   return {
     schema: 'dast',
     document: {
@@ -70,7 +82,7 @@ export function emptyCell(): CellValue {
   };
 }
 
-export function stringToCellValue(text: string): CellValue {
+export function stringToCellValue(text: string): DastCellValue {
   const trimmed = text.trim();
   if (!trimmed) return emptyCell();
   return {
@@ -91,6 +103,13 @@ export function isCellValue(data: unknown): data is CellValue {
   if (typeof data !== 'object' || data === null || Array.isArray(data))
     return false;
   const d = data as Record<string, unknown>;
+
+  if (d.schema === 'image') {
+    if (typeof d.upload !== 'object' || d.upload === null) return false;
+    const u = d.upload as Record<string, unknown>;
+    return typeof u.id === 'string' && typeof u.url === 'string';
+  }
+
   if (d.schema !== 'dast') return false;
   if (
     typeof d.document !== 'object' ||
@@ -184,7 +203,7 @@ function dastBlockToTiptap(node: DastBlockNode): JSONContent | null {
   }
 }
 
-export function dastToTiptap(cell: CellValue): JSONContent {
+export function dastToTiptap(cell: DastCellValue): JSONContent {
   return {
     type: 'doc',
     content: cell.document.children
@@ -312,7 +331,7 @@ function tiptapNodeToDast(node: JSONContent): DastBlockNode | null {
   }
 }
 
-export function tiptapToDast(tiptap: JSONContent): CellValue {
+export function tiptapToDast(tiptap: JSONContent): DastCellValue {
   return {
     schema: 'dast',
     document: {
