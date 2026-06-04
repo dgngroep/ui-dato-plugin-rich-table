@@ -68,7 +68,13 @@ export type ImageCellValue = {
   };
 };
 
-export type CellValue = DastCellValue | ImageCellValue;
+export type ButtonCellValue = {
+  schema: 'button';
+  label: string;
+  href: string;
+};
+
+export type CellValue = DastCellValue | ImageCellValue | ButtonCellValue;
 
 // ---- Helpers ----
 
@@ -108,6 +114,10 @@ export function isCellValue(data: unknown): data is CellValue {
     if (typeof d.upload !== 'object' || d.upload === null) return false;
     const u = d.upload as Record<string, unknown>;
     return typeof u.id === 'string' && typeof u.url === 'string';
+  }
+
+  if (d.schema === 'button') {
+    return typeof d.label === 'string' && typeof d.href === 'string';
   }
 
   if (d.schema !== 'dast') return false;

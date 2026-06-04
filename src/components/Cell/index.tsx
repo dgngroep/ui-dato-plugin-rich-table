@@ -1,9 +1,16 @@
-import { faFileImage, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCtx } from 'datocms-react-ui';
+import {
+  Dropdown,
+  DropdownMenu,
+  DropdownOption,
+  DropdownSeparator,
+  useCtx,
+} from 'datocms-react-ui';
 import type { Column as TableColumn, Row as TableRow } from 'react-table';
-import type { Actions, CellValue, Row } from '../../types';
+import type { Actions, ButtonCellValue, CellValue, Row } from '../../types';
 import { emptyCell } from '../../utils/dastConverter';
+import ButtonCell from '../ButtonCell';
 import ImageCell from '../ImageCell';
 import RichTextCell from '../RichTextCell';
 import s from './styles.module.css';
@@ -25,6 +32,10 @@ export default function Cell(props: Props) {
     onCellUpdate,
   } = props;
 
+  const switchToText = () => {
+    onCellUpdate(index, id as string, emptyCell());
+  };
+
   const switchToImage = async () => {
     const upload = await ctx.selectUpload({ multiple: false });
     if (!upload) return;
@@ -39,27 +50,61 @@ export default function Cell(props: Props) {
     });
   };
 
-  const switchToText = () => {
-    onCellUpdate(index, id as string, emptyCell());
+  const switchToButton = async () => {
+    const result = await ctx.openModal({
+      id: 'button-config',
+      title: 'Configure button',
+      width: 's',
+      parameters: { button: null },
+    });
+    if (!result || result === 'abort') return;
+    onCellUpdate(index, id as string, result as ButtonCellValue);
   };
-
-  const isImage = value.schema === 'image';
 
   return (
     <div className={s.wrapper}>
-      {isImage ? (
+      {value.schema === 'image' ? (
         <ImageCell {...props} value={value} />
+      ) : value.schema === 'button' ? (
+        <ButtonCell {...props} value={value} />
       ) : (
         <RichTextCell {...props} value={value} />
       )}
-      <button
-        type="button"
-        className={s.typeToggle}
-        onClick={isImage ? switchToText : switchToImage}
-        title={isImage ? 'Switch to text' : 'Switch to image'}
+
+      <Dropdown
+        renderTrigger={({ onClick, open }) => (
+          <button
+            type="button"
+            className={`${s.typeToggle} ${open ? s.typeToggleOpen : ''}`}
+            onClick={onClick}
+            title="Change cell type"
+          >
+            <FontAwesomeIcon icon={faEllipsisV} />
+          </button>
+        )}
       >
-        <FontAwesomeIcon icon={isImage ? faFont : faFileImage} />
-      </button>
+        <DropdownMenu>
+          <DropdownOption
+            onClick={switchToText}
+            active={value.schema === 'dast'}
+          >
+            Text
+          </DropdownOption>
+          <DropdownOption
+            onClick={switchToImage}
+            active={value.schema === 'image'}
+          >
+            Image
+          </DropdownOption>
+          <DropdownSeparator />
+          <DropdownOption
+            onClick={switchToButton}
+            active={value.schema === 'button'}
+          >
+            Button
+          </DropdownOption>
+        </DropdownMenu>
+      </Dropdown>
     </div>
   );
 }

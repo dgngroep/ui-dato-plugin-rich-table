@@ -28,6 +28,8 @@
   opacity: 1;
 }
 
-.typeToggle:hover {
+.typeToggle:hover,
+.typeToggleOpen {
   background: rgba(var(--light-body-color-rgb-components), 0.18);
+  opacity: 1;
 }

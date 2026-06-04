@@ -1,4 +1,5 @@
 import { connect } from 'datocms-plugin-sdk';
+import ButtonConfigModal from './entrypoints/ButtonConfigModal';
 import FieldExtension from './entrypoints/FieldExtension';
 import Modal from './entrypoints/Modal';
 import { render } from './utils/render';
@@ -18,7 +19,11 @@ connect({
   renderFieldExtension(_id, ctx) {
     render(<FieldExtension ctx={ctx} />);
   },
-  renderModal(_id, ctx) {
-    render(<Modal ctx={ctx} />);
+  renderModal(id, ctx) {
+    if (id === 'button-config') {
+      render(<ButtonConfigModal ctx={ctx} />);
+    } else {
+      render(<Modal ctx={ctx} />);
+    }
   },
 });

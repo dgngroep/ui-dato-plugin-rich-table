@@ -1,11 +1,12 @@
 import {
   isCellValue,
+  type ButtonCellValue,
   type CellValue,
   type DastCellValue,
   type ImageCellValue,
 } from './utils/dastConverter';
 
-export type { CellValue, DastCellValue, ImageCellValue };
+export type { ButtonCellValue, CellValue, DastCellValue, ImageCellValue };
 
 export type Value = {
   columns: string[];
