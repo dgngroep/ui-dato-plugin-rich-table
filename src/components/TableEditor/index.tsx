@@ -5,9 +5,9 @@ import {
   faPlus,
   faTrash,
   faTrashAlt,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import classNames from 'classnames';
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import classNames from "classnames";
 import {
   Button,
   Dropdown,
@@ -15,9 +15,9 @@ import {
   DropdownOption,
   DropdownSeparator,
   useCtx,
-} from 'datocms-react-ui';
-import omit from 'lodash-es/omit';
-import { useEffect, useMemo, useRef } from 'react';
+} from "datocms-react-ui";
+import omit from "lodash-es/omit";
+import { useEffect, useMemo, useRef } from "react";
 import {
   type Column,
   type ColumnInstance,
@@ -25,13 +25,13 @@ import {
   useFlexLayout,
   useResizeColumns,
   useTable,
-} from 'react-table';
-import { useDeepCompareMemo } from 'use-deep-compare';
-import type { Actions, Row, Value } from '../../types';
-import { emptyCell, stringToCellValue } from '../../utils/dastConverter';
-import Cell from '../Cell';
-import EditableHeader from '../EditableHeader';
-import s from './styles.module.css';
+} from "react-table";
+import { useDeepCompareMemo } from "use-deep-compare";
+import type { Actions, Row, Value } from "../../types";
+import { emptyCell, stringToCellValue } from "../../utils/dastConverter";
+import Cell from "../Cell";
+import EditableHeader from "../EditableHeader";
+import s from "./styles.module.css";
 
 // react-table 7 augments ColumnInstance with resize props via UseResizeColumns plugin
 type ResizableColumn = ColumnInstance<Row> & {
@@ -98,7 +98,7 @@ export default function TableEditor({
     [value.columns],
   );
 
-  const onCellUpdate: Actions['onCellUpdate'] = (index, column, cellValue) => {
+  const onCellUpdate: Actions["onCellUpdate"] = (index, column, cellValue) => {
     onChange({
       ...value,
       data: value.data.map((row, i) =>
@@ -109,30 +109,23 @@ export default function TableEditor({
     });
   };
 
-  const onColumnRename: Actions['onColumnRename'] = (oldColumn, newColumn) => {
-    const newColumns = value.columns.map((c) =>
-      c === oldColumn ? newColumn : c,
-    );
+  const onColumnRename: Actions["onColumnRename"] = (column, newLabel) => {
     onChange({
-      columns: newColumns,
-      data: value.data.map((row) =>
-        orderedKeys(
-          { ...omit(row, [oldColumn]), [newColumn]: row[oldColumn] },
-          newColumns,
-        ),
-      ),
+      ...value,
+      columnLabels: { ...value.columnLabels, [column]: newLabel },
     });
   };
 
-  const onRemoveColumn: Actions['onRemoveColumn'] = (column) => {
+  const onRemoveColumn: Actions["onRemoveColumn"] = (column) => {
     onChange({
       columns: value.columns.filter((c) => c !== column),
+      columnLabels: omit(value.columnLabels ?? {}, [column]),
       data: value.data.map((row) => omit(row, [column])),
     });
   };
 
   const findNewColumnName = () => {
-    let columnName = 'New Column';
+    let columnName = "New Column";
     let i = 1;
     while (value.columns.indexOf(columnName) !== -1) {
       columnName = `New Column ${i}`;
@@ -141,7 +134,7 @@ export default function TableEditor({
     return columnName;
   };
 
-  const onAddColumn: Actions['onAddColumn'] = (column, toTheLeft) => {
+  const onAddColumn: Actions["onAddColumn"] = (column, toTheLeft) => {
     const columnName = findNewColumnName();
     const newColumns = [...value.columns];
     newColumns.splice(
@@ -157,7 +150,7 @@ export default function TableEditor({
     });
   };
 
-  const onMoveColumn: Actions['onMoveColumn'] = (column, toTheLeft) => {
+  const onMoveColumn: Actions["onMoveColumn"] = (column, toTheLeft) => {
     const newColumns = moveItemInArray(
       value.columns,
       value.columns.indexOf(column),
@@ -169,7 +162,7 @@ export default function TableEditor({
     });
   };
 
-  const onAddRow: Actions['onAddRow'] = (row, toTheBottom) => {
+  const onAddRow: Actions["onAddRow"] = (row, toTheBottom) => {
     const newRow = Object.fromEntries(
       value.columns.map((column) => [column, emptyCell()]),
     );
@@ -178,20 +171,20 @@ export default function TableEditor({
     onChange({ ...value, data: newData });
   };
 
-  const onMoveRow: Actions['onMoveRow'] = (row, toTheBottom) => {
+  const onMoveRow: Actions["onMoveRow"] = (row, toTheBottom) => {
     onChange({
       ...value,
       data: moveItemInArray(value.data, row, !toTheBottom),
     });
   };
 
-  const onRemoveRow: Actions['onRemoveRow'] = (row) => {
+  const onRemoveRow: Actions["onRemoveRow"] = (row) => {
     const newData = [...value.data];
     newData.splice(row, 1);
     onChange({ ...value, data: newData });
   };
 
-  const onMultipleCellUpdate: Actions['onMultipleCellUpdate'] = (
+  const onMultipleCellUpdate: Actions["onMultipleCellUpdate"] = (
     index,
     id,
     table,
@@ -224,11 +217,13 @@ export default function TableEditor({
 
   const handleClear = async () => {
     const result = await ctx.openConfirm({
-      title: 'Clear the table?',
+      title: "Clear the table?",
       content:
-        'Are you sure you want to clear the table and start over? All rows and headers will be destroyed.',
-      choices: [{ label: 'Yes, clear the table', value: true, intent: 'negative' }],
-      cancel: { label: 'Go back', value: false },
+        "Are you sure you want to clear the table and start over? All rows and headers will be destroyed.",
+      choices: [
+        { label: "Yes, clear the table", value: true, intent: "negative" },
+      ],
+      cancel: { label: "Go back", value: false },
     });
     if (result === true) onChange(null);
   };
@@ -239,6 +234,7 @@ export default function TableEditor({
         columns: tableColumns,
         data: value.data,
         defaultColumn,
+        columnLabels: value.columnLabels,
         onCellUpdate,
         onColumnRename,
         onAddColumn,
@@ -247,7 +243,7 @@ export default function TableEditor({
         onRemoveColumn,
         onRemoveRow,
         onMultipleCellUpdate,
-      } as TableOptions<Row>,
+      } as unknown as TableOptions<Row>,
       useResizeColumns,
       useFlexLayout,
     );
@@ -265,15 +261,15 @@ export default function TableEditor({
         theadRef.current.scrollLeft = target.scrollLeft;
       }
     };
-    tbody.addEventListener('scroll', handler);
-    return () => tbody.removeEventListener('scroll', handler);
+    tbody.addEventListener("scroll", handler);
+    return () => tbody.removeEventListener("scroll", handler);
   }, []);
 
   return (
     <div>
       <div {...getTableProps()} className={s.table}>
         {/* Header */}
-        <div className={s.thead} ref={theadRef} style={{ overflowX: 'hidden' }}>
+        <div className={s.thead} ref={theadRef} style={{ overflowX: "hidden" }}>
           {headerGroups.map((headerGroup) => {
             const { key: groupKey, ...groupProps } =
               headerGroup.getHeaderGroupProps();
@@ -284,7 +280,7 @@ export default function TableEditor({
                   const { key: colKey, ...colProps } = column.getHeaderProps();
                   return (
                     <div key={colKey} {...colProps} className={s.th}>
-                      {column.render('Header')}
+                      {column.render("Header")}
                       <div
                         {...column.getResizerProps()}
                         className={classNames(s.resizer, {
@@ -303,7 +299,7 @@ export default function TableEditor({
         <div
           {...getTableBodyProps()}
           ref={tbodyRef}
-          style={{ overflowX: 'auto' }}
+          style={{ overflowX: "auto" }}
         >
           {rows.map((row, i) => {
             prepareRow(row);
@@ -354,7 +350,7 @@ export default function TableEditor({
                   const { key: cellKey, ...cellProps } = cell.getCellProps();
                   return (
                     <div key={cellKey} {...cellProps} className={s.td}>
-                      {cell.render('Cell')}
+                      {cell.render("Cell")}
                     </div>
                   );
                 })}

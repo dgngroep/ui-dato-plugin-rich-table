@@ -10,6 +10,7 @@ export type { ButtonCellValue, CellValue, DastCellValue, ImageCellValue };
 
 export type Value = {
   columns: string[];
+  columnLabels?: Record<string, string>;
   data: Row[];
 };
 

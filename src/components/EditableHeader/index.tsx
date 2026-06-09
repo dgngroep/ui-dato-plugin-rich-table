@@ -26,11 +26,13 @@ type Props = Actions & {
   row: { index: number };
   column: Column<Row>;
   columns: Column<Row>[];
+  columnLabels?: Record<string, string>;
 };
 
 export default function EditableHeader({
   column: { id },
   columns,
+  columnLabels,
   onColumnRename,
   onAddColumn,
   onMoveColumn,
@@ -38,11 +40,12 @@ export default function EditableHeader({
 }: Props) {
   const ctx = useCtx();
   const [panel, setPanel] = useState('root');
-  const [nameValue, setNameValue] = useState(id ?? '');
+  const displayName = columnLabels?.[id ?? ''] ?? id ?? '';
+  const [nameValue, setNameValue] = useState(displayName);
 
   useEffect(() => {
-    setNameValue(id ?? '');
-  }, [id]);
+    setNameValue(columnLabels?.[id ?? ''] ?? id ?? '');
+  }, [id, columnLabels]);
 
   const handleChangeName = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,14 +54,10 @@ export default function EditableHeader({
       return;
     }
 
-    if (columns.find((c) => c.id === nameValue)) {
-      ctx.alert('Column names must be unique!');
-      return;
-    }
-
     if (!id) return;
 
     onColumnRename(id, nameValue);
+    setPanel('root');
   };
 
   const columnIndex = columns.findIndex((c) => c.id === id);
@@ -67,7 +66,7 @@ export default function EditableHeader({
     <Dropdown
       renderTrigger={({ onClick }) => (
         <button onClick={onClick} className={s.button}>
-          <span>{id}</span>
+          <span>{displayName}</span>
           <FontAwesomeIcon icon={faCog} />
         </button>
       )}
