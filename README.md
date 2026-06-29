@@ -8,4 +8,8 @@ Run the app with `yarn dev`. Go to Dato project, click the `Configuration` tab t
 
 ## How to deploy
 
-The entrypoint URL for the plugin is: https://dato-rich-table-editor.vercel.app/ . Currently the only person able to deploy this plugin is @mivd7. It is currently hosted on his personal vercel account. Moving this to a shared host where everyone can build and deploy the app should be implemented soon.
+The plugin is automatically deployed to GitHub Pages on every push to `main`. The entrypoint URL is:
+
+https://dgngroep.github.io/ui-dato-plugin-rich-table/
+
+No manual deployment steps are needed.
