@@ -16,6 +16,7 @@ import {
   DropdownSeparator,
   useCtx,
 } from "datocms-react-ui";
+import mapValues from "lodash-es/mapValues";
 import omit from "lodash-es/omit";
 import { useEffect, useMemo, useRef } from "react";
 import {
@@ -44,6 +45,15 @@ type Props = {
   onChange: (value: Value | null) => void;
   onOpenInFullScreen?: () => void;
 };
+
+const MIN_COLUMN_WIDTH = 30;
+const DEFAULT_COLUMN_WIDTH = 150;
+const MAX_COLUMN_WIDTH = 400;
+
+// react-table's resize state holds the raw drag value, which can go past the
+// min/max that the rendered layout clamps to — clamp before persisting.
+const clampColumnWidth = (width: number) =>
+  Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, Math.round(width)));
 
 function orderedKeys<T extends { [k: string]: unknown }>(
   object: T,
@@ -78,9 +88,9 @@ export default function TableEditor({
 
   const defaultColumn = useMemo(
     () => ({
-      minWidth: 30,
-      width: 150,
-      maxWidth: 400,
+      minWidth: MIN_COLUMN_WIDTH,
+      width: DEFAULT_COLUMN_WIDTH,
+      maxWidth: MAX_COLUMN_WIDTH,
     }),
     [],
   );
@@ -94,8 +104,9 @@ export default function TableEditor({
         Cell,
         id: column,
         accessor: (row: Row) => row[column],
+        width: value.columnWidths?.[column] ?? DEFAULT_COLUMN_WIDTH,
       })) as unknown as Column<Row>[],
-    [value.columns],
+    [value.columns, value.columnWidths],
   );
 
   const onCellUpdate: Actions["onCellUpdate"] = (index, column, cellValue) => {
@@ -118,9 +129,18 @@ export default function TableEditor({
 
   const onRemoveColumn: Actions["onRemoveColumn"] = (column) => {
     onChange({
+      ...value,
       columns: value.columns.filter((c) => c !== column),
       columnLabels: omit(value.columnLabels ?? {}, [column]),
+      columnWidths: omit(value.columnWidths ?? {}, [column]),
       data: value.data.map((row) => omit(row, [column])),
+    });
+  };
+
+  const onResetColumnWidth: Actions["onResetColumnWidth"] = (column) => {
+    onChange({
+      ...value,
+      columnWidths: omit(value.columnWidths ?? {}, [column]),
     });
   };
 
@@ -143,6 +163,7 @@ export default function TableEditor({
       columnName,
     );
     onChange({
+      ...value,
       columns: newColumns,
       data: value.data.map((row) =>
         orderedKeys({ ...row, [columnName]: emptyCell() }, newColumns),
@@ -157,6 +178,7 @@ export default function TableEditor({
       toTheLeft,
     );
     onChange({
+      ...value,
       columns: newColumns,
       data: value.data.map((row) => orderedKeys(row, newColumns)),
     });
@@ -228,25 +250,70 @@ export default function TableEditor({
     if (result === true) onChange(null);
   };
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable(
-      {
-        columns: tableColumns,
-        data: value.data,
-        defaultColumn,
-        columnLabels: value.columnLabels,
-        onCellUpdate,
-        onColumnRename,
-        onAddColumn,
-        onAddRow,
-        onMoveColumn,
-        onRemoveColumn,
-        onRemoveRow,
-        onMultipleCellUpdate,
-      } as unknown as TableOptions<Row>,
-      useResizeColumns,
-      useFlexLayout,
-    );
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    state,
+  } = useTable(
+    {
+      columns: tableColumns,
+      data: value.data,
+      defaultColumn,
+      columnLabels: value.columnLabels,
+      columnWidths: value.columnWidths,
+      onCellUpdate,
+      onColumnRename,
+      onAddColumn,
+      onAddRow,
+      onMoveColumn,
+      onRemoveColumn,
+      onRemoveRow,
+      onResetColumnWidth,
+      onMultipleCellUpdate,
+    } as unknown as TableOptions<Row>,
+    useResizeColumns,
+    useFlexLayout,
+  );
+
+  // react-table's UseResizeColumnsState isn't reflected in TableState's type
+  // without module augmentation, hence the cast.
+  const columnResizing = (
+    state as unknown as {
+      columnResizing?: {
+        isResizingColumn?: string | null;
+        columnWidths?: Record<string, number>;
+      };
+    }
+  ).columnResizing;
+
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  });
+
+  // Persist the resized widths into the field value once a drag ends.
+  // react-table wipes its own resize state whenever the columns change
+  // (autoResetResize), so the stored value is the only durable copy.
+  const isResizingColumn = !!columnResizing?.isResizingColumn;
+  const resizedWidths = columnResizing?.columnWidths;
+  const wasResizingRef = useRef(false);
+  useEffect(() => {
+    if (wasResizingRef.current && !isResizingColumn && resizedWidths) {
+      const current = valueRef.current;
+      onChange({
+        ...current,
+        columnWidths: {
+          ...current.columnWidths,
+          ...mapValues(resizedWidths, clampColumnWidth),
+        },
+      });
+    }
+    wasResizingRef.current = isResizingColumn;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResizingColumn]);
 
   const tbodyRef = useRef<HTMLDivElement>(null);
   const theadRef = useRef<HTMLDivElement>(null);

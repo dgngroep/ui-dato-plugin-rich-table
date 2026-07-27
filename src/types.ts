@@ -11,6 +11,7 @@ export type { ButtonCellValue, CellValue, DastCellValue, ImageCellValue };
 export type Value = {
   columns: string[];
   columnLabels?: Record<string, string>;
+  columnWidths?: Record<string, number>;
   data: Row[];
 };
 
@@ -29,6 +30,7 @@ export type Actions = {
   onMoveColumn: (column: string, toTheLeft: boolean) => void;
   onRemoveColumn: (column: string) => void;
   onColumnRename: (column: string, newColumn: string) => void;
+  onResetColumnWidth: (column: string) => void;
   onAddRow: (row: number, toTheBottom: boolean) => void;
   onMoveRow: (row: number, toTheBottom: boolean) => void;
   onRemoveRow: (row: number) => void;
