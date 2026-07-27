@@ -1,4 +1,5 @@
 import {
+  faArrowsAltH,
   faCog,
   faLongArrowAltLeft,
   faLongArrowAltRight,
@@ -27,16 +28,19 @@ type Props = Actions & {
   column: Column<Row>;
   columns: Column<Row>[];
   columnLabels?: Record<string, string>;
+  columnWidths?: Record<string, number>;
 };
 
 export default function EditableHeader({
   column: { id },
   columns,
   columnLabels,
+  columnWidths,
   onColumnRename,
   onAddColumn,
   onMoveColumn,
   onRemoveColumn,
+  onResetColumnWidth,
 }: Props) {
   const ctx = useCtx();
   const [panel, setPanel] = useState('root');
@@ -82,6 +86,11 @@ export default function EditableHeader({
             >
               <FontAwesomeIcon icon={faPen} /> Rename column
             </DropdownOption>
+            {columnWidths?.[id] != null && (
+              <DropdownOption onClick={onResetColumnWidth.bind(null, id)}>
+                <FontAwesomeIcon icon={faArrowsAltH} /> Reset column width
+              </DropdownOption>
+            )}
             <DropdownOption red onClick={onRemoveColumn.bind(null, id)}>
               <FontAwesomeIcon icon={faTrashAlt} /> Remove column
             </DropdownOption>
