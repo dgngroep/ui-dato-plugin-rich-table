@@ -11,15 +11,18 @@ The plugin stores its value as JSON in the field:
   "columns": ["Product", "Price"], // column keys, in display order
   "columnLabels": { "Price": "Price (EUR)" }, // optional display names per column key
   "columnWidths": { "Price": 220 }, // optional widths per column key
-  "data": [{ "Product": { /* cell value */ }, "Price": { /* cell value */ } }]
+  "data": [
+    {
+      "Product": {
+        /* cell value */
+      },
+      "Price": {
+        /* cell value */
+      },
+    },
+  ],
 }
 ```
-
-### Column widths
-
-`columnWidths` is a sparse map: only columns that were explicitly resized in the editor have an entry; columns without one use the default width of `150`. Entries are removed again when a column is removed or its width is reset via the column menu.
-
-The numbers are react-table flex weights (px-based, but columns stretch to fill the available space). To render a table proportionally on a frontend, compute each column's share as `width / totalWidth`, where `totalWidth` is the sum of all columns' widths, counting `150` for every column without an entry.
 
 ## How to dev
 
