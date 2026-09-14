@@ -3,7 +3,7 @@ import Underline from '@tiptap/extension-underline';
 import { BubbleMenu, EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { dequal } from 'dequal';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Column as TableColumn, Row as TableRow } from 'react-table';
 import type { Actions, DastCellValue, Row } from '../../types';
 import { dastToTiptap, tiptapToDast } from '../../utils/dastConverter';
@@ -24,10 +24,13 @@ export default function RichTextCell({
   onCellUpdate,
   onMultipleCellUpdate,
 }: Props) {
-  const isSyncing = useRef(false);
   const onCellUpdateRef = useRef(onCellUpdate);
   const onMultipleCellUpdateRef = useRef(onMultipleCellUpdate);
   const prevValueRef = useRef(value);
+  // Mirrors the document the editor currently holds, so the sync effect below
+  // can tell an echo of our own change from a genuinely external one. Every
+  // write to the document has to keep it up to date.
+  const lastEmittedRef = useRef<DastCellValue>(value);
 
   useEffect(() => {
     onCellUpdateRef.current = onCellUpdate;
@@ -36,34 +39,53 @@ export default function RichTextCell({
     onMultipleCellUpdateRef.current = onMultipleCellUpdate;
   });
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
+  // Tiptap re-applies the editor options on any render where they are not
+  // referentially equal to the previous ones, and re-applying runs a ProseMirror
+  // updateState() on every cell of the table. So `extensions` and `content` both
+  // have to keep their identity; `content` is only read on creation anyway.
+  const extensions = useMemo(
+    () => [
+      // Blockquotes, code blocks and horizontal rules have no DAST equivalent
+      // here, so tiptapToDast() would silently drop them on save. Don't offer
+      // the input rules that produce them.
+      StarterKit.configure({
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
+      }),
       Underline,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { rel: 'noopener noreferrer' },
       }),
     ],
-    content: dastToTiptap(value),
+    [],
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialContent = useMemo(() => dastToTiptap(value), []);
+
+  const editor = useEditor({
+    extensions,
+    content: initialContent,
     onUpdate: ({ editor: e }) => {
-      if (isSyncing.current) return;
       const dast = tiptapToDast(e.getJSON());
+      lastEmittedRef.current = dast;
       onCellUpdateRef.current(index, id as string, dast);
     },
   });
 
-  // Sync value changes from external sources (e.g. multi-cell paste)
+  // Sync value changes from external sources (e.g. multi-cell paste, or the
+  // cell type being reset to text from the Cell dropdown). Everything this
+  // editor emits also comes straight back down as `value`; re-applying such an
+  // echo would reset the caret and discard whatever was typed in the meantime.
   useEffect(() => {
     if (!editor) return;
     if (dequal(prevValueRef.current, value)) return;
     prevValueRef.current = value;
 
-    isSyncing.current = true;
+    if (dequal(lastEmittedRef.current, value)) return;
     editor.commands.setContent(dastToTiptap(value), false);
-    requestAnimationFrame(() => {
-      isSyncing.current = false;
-    });
+    lastEmittedRef.current = value;
   }, [editor, value]);
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
